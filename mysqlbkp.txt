@@ -1,0 +1,78 @@
+# author: Jefferson Fontana
+
+#simple process to backup mysql database.
+#in this example, im saving the sql dump from a mysql server (linux) into a backup server (windows)
+#i'm assuming that you already have a running mysql server with some database configured.
+#ps: if you are running a debian based version of linux, you may use "apt-get" instead of "yum"
+
+- WINDOWS SIDE:
+
+1. create a folder and share it with a valid account (read/write), also allow this account to at least "read, write and modify" on nfts permissions of the folder.
+
+2. in this example, your share name is \\yourserver.domain\path\to\share\
+
+- LINUX SIDE:
+
+1. install smbclient and cifs-utils:
+
+#sudo yum install cifs-utils samba-client -y
+
+2. create the entry of share on fstab with automount on reboot:
+
+#sudo vi /etc/fstab
+
+include the line below:
+
+//yourserver.domain/path/of/share /mnt/bkp-yourapplicationname  cifs   credentials=/path/to/sharecredentials,uid=0,auto,user  0 0
+
+3. create the file of sharing credentials
+
+#sudo vi /path/to/sharecredentials
+
+username=accountname_with_permission_on_windows_share
+password=yourpassword
+domain=yourdomain
+
+4. create a cnf file with mysql database credentials (to use with mysqldump command)
+
+#sudo vi /path/to/cnf/yourapplicationname.cnf
+
+[mysqldump]
+host="localhost"
+user="yourdbusername"
+password="yourdbpassword"
+
+5. create a script to automatically save the dump on windows share where you prefer
+
+#sudo vi /prefered/path/yourscript.sh
+
+include the script below:
+
+########## SCRIPT BEGIN ##########
+
+#!/bin/bash
+
+BKPMOUNT=`df | grep yourapplicationname | awk -F" " '{print $6}'`
+BKPDAY=`date '+%d%m%Y'`
+
+if [ "$BKPMOUNT" == "" ]
+        then mount /mnt/bkp-yourapplicationname ;
+fi
+
+save and quit, then:
+
+#chmod +x /prefered/path/yourscript.sh
+
+mysqldump --defaults-extra-file=/path/to/cnf/yourapplicationname.cnf databasename > /mnt/bkp-yourapplicationname/yourapplicationname-bkpdb-$BKPDAY.sql
+
+########## SCRIPT END ##########
+
+save and quit.
+
+6. add the following line on the crontab (this example will run the script everyday at 10pm)
+
+#sudo crontab -e
+
+* 22 * * * root /prefered/path/yourscript.sh
+
+save and quit.
