@@ -59,15 +59,13 @@ if [ "$BKPMOUNT" == "" ]
         then mount /mnt/bkp-yourapplicationname ;
 fi
 
-save and quit, then:
-
-#chmod +x /prefered/path/yourscript.sh
-
 mysqldump --defaults-extra-file=/path/to/cnf/yourapplicationname.cnf databasename > /mnt/bkp-yourapplicationname/yourapplicationname-bkpdb-$BKPDAY.sql
 
 ########## SCRIPT END ##########
 
-save and quit.
+save and quit, then:
+
+#chmod +x /prefered/path/yourscript.sh
 
 6. add the following line on the crontab (this example will run the script everyday at 10pm)
 
